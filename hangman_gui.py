@@ -17,6 +17,7 @@ class Hangman(tk.Tk):
         self.word_list = []
         self.word = ""
         self.empty_letters = []
+        self.difficulty = None
 
         self.frames = {}
         for F in (HomePage, GamePage):
@@ -37,8 +38,9 @@ class Hangman(tk.Tk):
         self.empty_letters.clear()
 
     def show_level(self, difficulty):
-        self.diff_label = tk.Label(self, text=f"{difficulty}", font=("Chalkboard", 20))
+        self.diff_label = tk.Label(self, text=f"{difficulty.title()}", font=("Chalkboard", 20))
         self.diff_label.place(x=460, y=50)
+        self.difficulty = difficulty
 
     def generate_word_list(self, difficulty):
         if self.word_list:
@@ -102,25 +104,25 @@ class HomePage(tk.Frame):
 
         easy_btn = tk.Button(self, text="Easy", font=("Chalkboard", 20),
                              command=lambda: [self.controller.show_frame("GamePage"),
-                                              self.controller.show_level("Easy"),
+                                              self.controller.show_level("easy"),
                                               self.controller.get_word("easy"),
                                               self.controller.show_empty_word()])
         easy_btn.place(x=410, y=200)
         med_btn = tk.Button(self, text="Medium", font=("Chalkboard", 20),
                             command=lambda: [self.controller.show_frame("GamePage"),
-                                             self.controller.show_level("Medium"),
+                                             self.controller.show_level("medium"),
                                              self.controller.get_word("medium"),
                                              self.controller.show_empty_word()])
         med_btn.place(x=400, y=250)
         hard_btn = tk.Button(self, text="Hard", font=("Chalkboard", 20),
                              command=lambda: [self.controller.show_frame("GamePage"),
-                                              self.controller.show_level("Hard"),
+                                              self.controller.show_level("hard"),
                                               self.controller.get_word("hard"),
                                               self.controller.show_empty_word()])
         hard_btn.place(x=410, y=300)
         rand_btn = tk.Button(self, text="Random", font=("Chalkboard", 20),
                              command=lambda: [self.controller.show_frame("GamePage"),
-                                              self.controller.show_level("Random"),
+                                              self.controller.show_level("random"),
                                               self.controller.get_word("random"),
                                               self.controller.show_empty_word()])
         rand_btn.place(x=400, y=350)
@@ -132,7 +134,7 @@ class GamePage(tk.Frame):
         self.controller = controller
         intro = tk.Label(self, text="Hangman!", font=("Chalkboard", 35))
         intro.place(x=220, y=15)
-        self.button = tk.Button(self, text="Go to the start page",
+        self.button = tk.Button(self, text="Main Menu",
                                 command=lambda: [self.controller.delete_level(), self.controller.show_frame("HomePage"),
                                                  self.reset_progress()])
         self.button.place(x=450, y=10)
@@ -143,9 +145,6 @@ class GamePage(tk.Frame):
         self.label1 = tk.Label(self, image=self.test)
         self.label1.image = self.test
         self.label1.place(x=25, y=85)
-        self.button = tk.Button(self, text="change level",
-                                command=lambda: self.change_level())
-        self.button.place(x=500, y=500)
         self.letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         self.letter_dic = {}
         self.clicked_letters = []
@@ -158,9 +157,11 @@ class GamePage(tk.Frame):
         self.used_words_str = tk.Label(self, text="Used Words", font=("Chalkboard", 19))
         self.used_words_str.place(x=455, y=110)
         self.missed_letter_objects = []
-        self.missed_count = 0
-        self.correct_count = 0
+        self.missed_count, self.correct_count = 0, 0
         self.used_coordinates = {}
+        self.end_string, self.correct_word = None, None
+        self.restart_button = tk.Button(self, text="restart",
+                                        command=lambda: [self.reset_progress(), self.restart_game()])
         for i in range(4):
             self.used_coordinates[i] = (450 + (i * 25), 150)
         for i in range(4, 8):
@@ -180,6 +181,20 @@ class GamePage(tk.Frame):
             letter_button = tk.Button(self, text=letter, command=lambda letter=letter: self.select_letter(letter))
             letter_button.place(x=50 + ((index - 13) * 35), y=545, anchor="center")
             self.letter_dic[index] = letter_button
+
+    def end_game(self):
+        if self.level > 6:
+            self.end_string = tk.Label(self, text="You Lose!", font=("Chalkboard", 24))
+            self.end_string.place(x=260, y=280)
+            self.correct_word = tk.Label(self, text=f"Correct Word: {self.controller.word.title()}",
+                                         font=("Chalkboard", 20))
+            self.correct_word.place(x=260, y=330)
+
+            self.restart_button.place(x=500, y=500)
+        elif self.correct_count == len(self.controller.word):
+            self.end_string = tk.Label(self, text="You Win!", font=("Chalkboard", 24))
+            self.end_string.place(x=260, y=280)
+            self.restart_button.place(x=500, y=500)
 
     def select_letter(self, letter):
         if self.level <= 6:
@@ -204,15 +219,17 @@ class GamePage(tk.Frame):
             index = self.letters.index(letter)
             button = self.letter_dic[index]
             button.place_forget()
+        self.end_game()
 
     def reset_progress(self):
         self.level = 0
-        self.missed_count = 0
+        self.missed_count, self.correct_count = 0, 0
         self.image1 = Image.open(f"images/gallows_{self.level}.png")
         self.image1 = self.image1.resize((185, 265))
         self.test = ImageTk.PhotoImage(self.image1)
         self.label1.config(image=self.test)
         self.label1.image = self.test
+        self.restart_button.place_forget()
         if self.clicked_letters:
             for letter in self.clicked_letters:
                 index = self.letters.index(letter)
@@ -230,6 +247,20 @@ class GamePage(tk.Frame):
         if self.missed_letter_objects:
             for i in self.missed_letter_objects:
                 i.destroy()
+            self.missed_letter_objects.clear()
+        if self.end_string:
+            self.end_string.destroy()
+            self.end_string = None
+        if self.correct_word:
+            self.correct_word.destroy()
+            self.correct_word = None
+
+    def restart_game(self):
+        for letter in self.controller.empty_letters:
+            letter.destroy()
+        self.controller.empty_letters = []
+        self.controller.get_word(self.controller.difficulty)
+        self.controller.show_empty_word()
 
     def change_level(self):
         if self.level <= 6:
