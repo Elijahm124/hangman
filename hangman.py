@@ -1,16 +1,14 @@
 import random
 from os import path
-import tkinter as tk
 
 
 def get_word_list():
     difficulty = ""
-    while not path.exists(difficulty):
+    while not path.exists(f"word_lists/{difficulty}_words"):
         difficulty = input("Type easy, medium, or hard: ")
 
-        difficulty += "_words"
 
-    with open(difficulty) as f:
+    with open(f"word_lists/{difficulty}_words") as f:
         contents = f.readlines()
 
     word_list = [word.strip() for word in contents]
