@@ -137,7 +137,7 @@ class GamePage(tk.Frame):
         self.button = tk.Button(self, text="Main Menu",
                                 command=lambda: [self.controller.delete_level(), self.controller.show_frame("HomePage"),
                                                  self.reset_progress()])
-        self.button.place(x=450, y=10)
+        self.button.place(x=75, y=30)
         self.level = 0
         self.image1 = Image.open(f"images/gallows_{self.level}.png")
         self.image1 = self.image1.resize((185, 265))
@@ -160,8 +160,10 @@ class GamePage(tk.Frame):
         self.missed_count, self.correct_count = 0, 0
         self.used_coordinates = {}
         self.end_string, self.correct_word = None, None
-        self.restart_button = tk.Button(self, text="restart",
+        self.game_ended = False
+        self.restart_button = tk.Button(self, text="Restart",
                                         command=lambda: [self.reset_progress(), self.restart_game()])
+        self.restart_button.place(x=20, y=30)
         for i in range(4):
             self.used_coordinates[i] = (450 + (i * 25), 150)
         for i in range(4, 8):
@@ -182,7 +184,8 @@ class GamePage(tk.Frame):
             letter_button.place(x=50 + ((index - 13) * 35), y=545, anchor="center")
             self.letter_dic[index] = letter_button
 
-    def end_game(self):
+    def check_end_game(self):
+
         if self.level > 6:
             self.end_string = tk.Label(self, text="You Lose!", font=("Chalkboard", 24))
             self.end_string.place(x=260, y=280)
@@ -190,11 +193,13 @@ class GamePage(tk.Frame):
                                          font=("Chalkboard", 20))
             self.correct_word.place(x=260, y=330)
 
-            self.restart_button.place(x=500, y=500)
+            for button in self.letter_dic.values():
+                button["state"] = "disable"
         elif self.correct_count == len(self.controller.word):
             self.end_string = tk.Label(self, text="You Win!", font=("Chalkboard", 24))
             self.end_string.place(x=260, y=280)
-            self.restart_button.place(x=500, y=500)
+            for button in self.letter_dic.values():
+                button["state"] = "disable"
 
     def select_letter(self, letter):
         if self.level <= 6:
@@ -219,7 +224,7 @@ class GamePage(tk.Frame):
             index = self.letters.index(letter)
             button = self.letter_dic[index]
             button.place_forget()
-        self.end_game()
+        self.check_end_game()
 
     def reset_progress(self):
         self.level = 0
@@ -229,7 +234,6 @@ class GamePage(tk.Frame):
         self.test = ImageTk.PhotoImage(self.image1)
         self.label1.config(image=self.test)
         self.label1.image = self.test
-        self.restart_button.place_forget()
         if self.clicked_letters:
             for letter in self.clicked_letters:
                 index = self.letters.index(letter)
@@ -254,6 +258,8 @@ class GamePage(tk.Frame):
         if self.correct_word:
             self.correct_word.destroy()
             self.correct_word = None
+        for button in self.letter_dic.values():
+            button["state"] = "normal"
 
     def restart_game(self):
         for letter in self.controller.empty_letters:
@@ -279,6 +285,9 @@ if __name__ == "__main__":
     app.title("Hangman")
     app.geometry("600x600")
     app.mainloop()
+
+
+    #If click buttons after game ends, text stays on
 
 """for i, v in enumerate("Hangman"):
     tk.Label(self, text=v, font=("Chalkboard", 40, "underline")).place(x=(265 + (i * 40)), y=50)"""
