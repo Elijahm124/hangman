@@ -8,4 +8,5 @@ The user is then taken to the game page, where they select a letter from the key
 
 Once the user reaches 7 missed letters, or completes all letters of the word, the game is over and the user has the option to either restart with another word of the same level or go to the main menu and select another difficulty. 
 
+![](hangman.gif)
 
